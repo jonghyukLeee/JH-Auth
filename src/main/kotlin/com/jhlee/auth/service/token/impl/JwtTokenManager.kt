@@ -14,9 +14,11 @@ import javax.crypto.SecretKey
 class JwtTokenManager(
     private val jwtProperties: JwtProperties
 ) {
+
     private fun getBaseSecretKey(): SecretKey {
         return Keys.hmacShaKeyFor(jwtProperties.key.toByteArray())
     }
+
     fun generateAccessToken(claims: Map<String, String>): String {
         val nowDate = Date()
         val expiryDate = Date(nowDate.time + jwtProperties.expiry)
