@@ -1,7 +1,6 @@
 package com.jhlee.auth.service.token
 
 import com.jhlee.auth.service.token.impl.JwtTokenManager
-import org.springframework.http.ResponseCookie
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ServerWebExchange
 
@@ -9,23 +8,25 @@ import org.springframework.web.server.ServerWebExchange
 class TokenService(
     private val jwtTokenManager: JwtTokenManager
 ) {
-    fun validate(token: String): Boolean {
-        return jwtTokenManager.validate(token)
-    }
-
-    fun getToken(exchange: ServerWebExchange, claims: Map<String, String>): String {
+    fun generate(serverWebExchange: ServerWebExchange, claims: Map<String, String>): String {
         val accessToken = jwtTokenManager.generateAccessToken(claims)
-        val refreshToken = jwtTokenManager.generateRefreshToken()
-
-        // TODO JwtTokenManager로 옮길 지 고민해보기
-        exchange.response.addCookie(
-            ResponseCookie.from("refreshToken", refreshToken).build()
-        )
+        jwtTokenManager.generateRefreshToken(serverWebExchange)
 
         return accessToken
     }
 
-    fun refresh(accessToken: String) {
-        // TODO
+    fun refresh(serverWebExchange: ServerWebExchange, accessToken: String, refreshToken: String): String {
+        val userId = jwtTokenManager.getClaims(accessToken)["userId"] as String
+
+        val newAccessToken = jwtTokenManager.generateAccessToken(mapOf("userId" to userId))
+        jwtTokenManager.generateRefreshToken(serverWebExchange)
+
+        return newAccessToken
     }
+
+    fun validate(token: String): Boolean {
+        return jwtTokenManager.validate(token)
+    }
+
+
 }
